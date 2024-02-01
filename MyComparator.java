@@ -29,7 +29,8 @@ public class MyComparator implements java.util.Comparator<Object> {
                         return 1;
                     }
                 }
-
+                if (sortByKind.equals("killes") && piece1 instanceof King){return 1;}
+                if (sortByKind.equals("killes") && piece2 instanceof King){return -1;}
                 if (sortByKind.equals("killes") && piece1 instanceof Pawn && piece2 instanceof Pawn){
                     if (((Pawn) piece1).getKillCounter() == ((Pawn) piece2).getKillCounter()){
                         if (Integer.parseInt(piece1.id.substring(1)) == Integer.parseInt(piece2.id.substring(1))){

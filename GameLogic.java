@@ -34,18 +34,24 @@ public class GameLogic implements PlayableLogic {
     //This is a function that check if the move that the player want to do is legal, and if it might kill a piece by moving
     public boolean move(Position a, Position b) {
         if ((a.getX() != b.getX()) && (a.getY() != b.getY())) {
+            System.out.println("false first" + a + "and b " + b);
             return false;
         } //This is illegal to move diagonally
         //****************//
-        if (piecePosition[a.getX()][a.getY()] == null){return false;}
+        if (piecePosition[a.getX()][a.getY()] == null){
+            System.out.println("false null" + a + "and b " + b);
+            return false;}
             if (!piecePosition[a.getX()][a.getY()].getType().equals("♔") && (b.getX() == 0 && b.getY() == 0 || b.getX() == 10 && b.getY() == 0 || b.getX() == 0 && b.getY() == 10 || b.getX() == 10 && b.getY() == 10)) {
+                System.out.println("false corners" + a + "and b " + b);
                 return false;
             }//Pawn cannot be in the corner of the board
         if (piecePosition[a.getX()][a.getY()].getOwner().isPlayerOne() == isSecondPlayerTurn()) {
+            System.out.println("false turn" + a + "and b " + b);
             return false;
         } //If it is currently the other player's turn, this is illegal
 
         if (!checkPath(a, b)) {
+            System.out.println("false !check" + a + "and b " + b);
             return false;
         } //Check if there are pieces in path of progress
 
@@ -61,7 +67,7 @@ public class GameLogic implements PlayableLogic {
         lastP.add(a);
 
         newP.add(b);
-
+    //***********//
         piecePosition[b.getX()][b.getY()].setPositions("("+b.getX()+", "+b.getY()+")"); //Add to ArrayList destination position
 
         piecePosition[a.getX()][a.getY()] = null; //After the piece moved, the last position the piece was in is empty
@@ -187,7 +193,7 @@ public class GameLogic implements PlayableLogic {
                     piecePosition[newP.peek().getX()][newP.peek().getY()].removeLastLoc();
                     boolean flag=false;
                     for (int i=0; i<piecePosition[newP.peek().getX()][newP.peek().getY()].getPositions().size(); i++){
-                        if (piecePosition[newP.peek().getX()][newP.peek().getY()].getPositions().get(i) == "("+newP.peek().getX()+", "+newP.peek().getY()+")"){
+                        if (piecePosition[newP.peek().getX()][newP.peek().getY()].getPositions().get(i).equals("(" + newP.peek().getX() + ", " + newP.peek().getY() + ")")){
                             flag=true;
                         }
                     }
@@ -215,7 +221,7 @@ public class GameLogic implements PlayableLogic {
     }
 
     //This function help us build the starting constructor of the game
-    private ConcretePiece[][] initGame (ConcretePiece[][] arr) {
+    private void initGame (ConcretePiece[][] arr) {
         transfer = new ArrayList<Position>();
         printPiece = new ArrayList<ConcretePiece>();
         howManySteps = new int[BOARD_SIZE][BOARD_SIZE];
@@ -458,7 +464,7 @@ public class GameLogic implements PlayableLogic {
         ((Pawn)arr[5][9]).restart_Kill();
 
 
-        return arr;
+
     }
 
 
@@ -553,7 +559,7 @@ public class GameLogic implements PlayableLogic {
                 killPawn(x, 0);
                 ((Pawn)piecePosition[x][y]).add_Kill();
                 //check condition to make a valid kill by squeeze the victim by two pawns
-            } else if (piecePosition[x][y - 2] != null && piecePosition[x][y - 2].getOwner().isPlayerOne() == isTheAttacker) {
+            } else if (piecePosition[x][y - 2] != null && piecePosition[x][y - 2].getOwner().isPlayerOne() == isTheAttacker && !isKingPosition(x,y-2)) {
                 //add kill to counter
                 killPawn(x, y - 1);
                 ((Pawn)piecePosition[x][y]).add_Kill();
@@ -569,7 +575,7 @@ public class GameLogic implements PlayableLogic {
                 killPawn(x, y + 1);
                 ((Pawn)piecePosition[x][y]).add_Kill();
                 //check condition to make a valid kill by squeeze the victim by two pawns
-            } else if (piecePosition[x][y + 2] != null && piecePosition[x][y + 2].getOwner().isPlayerOne() == isTheAttacker) {
+            } else if (piecePosition[x][y + 2] != null && piecePosition[x][y + 2].getOwner().isPlayerOne() == isTheAttacker && !isKingPosition(x,y+2)) {
                 //add kill to counter
                 killPawn(x, y + 1);
                 ((Pawn)piecePosition[x][y]).add_Kill();
@@ -584,7 +590,7 @@ public class GameLogic implements PlayableLogic {
                 killPawn(x + 1, y);
                 ((Pawn)piecePosition[x][y]).add_Kill();
                 //check condition to make a valid kill by squeeze the victim by two pawns
-            } else if (piecePosition[x + 2][y] != null && piecePosition[x + 2][y].getOwner().isPlayerOne() == isTheAttacker) {
+            } else if (piecePosition[x + 2][y] != null && piecePosition[x + 2][y].getOwner().isPlayerOne() == isTheAttacker && !isKingPosition(x+2,y)) {
                 //add kill to counter
                 killPawn(x + 1, y);
                 ((Pawn)piecePosition[x][y]).add_Kill();
@@ -598,7 +604,7 @@ public class GameLogic implements PlayableLogic {
                 killPawn(x - 1, y);
                 ((Pawn)piecePosition[x][y]).add_Kill();
                 //check condition to make a valid kill by squeeze the victim by two pawns
-            } else if (piecePosition[x - 2][y] != null && piecePosition[x - 2][y].getOwner().isPlayerOne() == isTheAttacker) {
+            } else if (piecePosition[x - 2][y] != null && piecePosition[x - 2][y].getOwner().isPlayerOne() == isTheAttacker && !isKingPosition(x-2,y)) {
                 //add kill to counter
                 killPawn(x - 1, y);
                 ((Pawn)piecePosition[x][y]).add_Kill();
@@ -763,13 +769,14 @@ public class GameLogic implements PlayableLogic {
      */
     //This function checks if a piece was at this destination
     public boolean WasThePieceHere (Position dest) {
-        boolean result = true;
         for (int i = 0; i < piecePosition[dest.getX()][dest.getY()].getPositions().size(); i++) {
-            if (piecePosition[dest.getX()][dest.getY()].getPositions().get(i) == "("+dest.getX()+", "+dest.getY()+")") {
-                result = false;
+            String a = "("+dest.getX()+", "+dest.getY()+")";
+             String b = piecePosition[dest.getX()][dest.getY()].getPositions().get(i);
+            if (a.equals(b)) {
+                return false;
             }
         }
-        return result;
+        return true;
     }
     //This function printing the statistics of the game
     private void printStatistics (ArrayList<ConcretePiece> print, ConcretePlayer winner){
