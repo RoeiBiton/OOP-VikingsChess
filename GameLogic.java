@@ -13,7 +13,7 @@ public class GameLogic implements PlayableLogic {
     private Stack<Position> newP = new Stack<>();
     final Position FIRST_KING_POSITION= new Position(5,5);
     private Position kingPosition = new Position(5,5);
-    private ArrayList<ConcretePiece> printPiece = new ArrayList<ConcretePiece>();
+    private ArrayList<ConcretePiece> printPiece = new ArrayList<>();
     private int[][] howManySteps = new int[BOARD_SIZE][BOARD_SIZE];
     private ArrayList<Position> transfer = new ArrayList<Position>();
     private ConcretePiece killerPiece;
