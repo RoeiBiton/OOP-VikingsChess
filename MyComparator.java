@@ -33,6 +33,7 @@ public class MyComparator implements java.util.Comparator<Object> {
                 if (sortByKind.equals("killes") && piece1 instanceof Pawn && piece2 instanceof Pawn){
                     if (((Pawn) piece1).getKillCounter() == ((Pawn) piece2).getKillCounter()){
                         if (Integer.parseInt(piece1.id.substring(1)) == Integer.parseInt(piece2.id.substring(1))){
+                            //System.out.println(piece1.id.substring(0) + " and " + piece2.id.substring(0));
                             if((piece1.getOwner().isPlayerOne() && winner.isPlayerOne()) || (!piece1.getOwner().isPlayerOne() && !winner.isPlayerOne())){
                                 return -1;
                             }
@@ -71,7 +72,7 @@ public class MyComparator implements java.util.Comparator<Object> {
                 }
                 return position1.getX()-position2.getX();
             }
-            return position1.getSteps()-position2.getSteps();
+            return position2.getSteps()-position1.getSteps();
         }
 
         return 0;   //Default case if everything is equal

@@ -17,11 +17,10 @@ public class GameLogic implements PlayableLogic {
     private int[][] howManySteps = new int[BOARD_SIZE][BOARD_SIZE];
     private ArrayList<Position> transfer = new ArrayList<Position>();
     private ConcretePiece killerPiece;
-
+    private boolean Winner;
 
     //constructor
-    public GameLogic() {
-        initGame(piecePosition);
+    public GameLogic() {initGame(piecePosition);
     }
 
     /**
@@ -37,11 +36,11 @@ public class GameLogic implements PlayableLogic {
         if ((a.getX() != b.getX()) && (a.getY() != b.getY())) {
             return false;
         } //This is illegal to move diagonally
-
-        if (!piecePosition[a.getX()][a.getY()].getType().equals("♔") && (b.getX()==0 && b.getY()==0 || b.getX()==10 && b.getY()==0 || b.getX()==0 && b.getY()==10 || b.getX()==10 && b.getY()==10)){
-            return false;
-        }//Pawn cannot be in the corner of the board
-
+        //****************//
+        if (piecePosition[a.getX()][a.getY()] == null){return false;}
+            if (!piecePosition[a.getX()][a.getY()].getType().equals("♔") && (b.getX() == 0 && b.getY() == 0 || b.getX() == 10 && b.getY() == 0 || b.getX() == 0 && b.getY() == 10 || b.getX() == 10 && b.getY() == 10)) {
+                return false;
+            }//Pawn cannot be in the corner of the board
         if (piecePosition[a.getX()][a.getY()].getOwner().isPlayerOne() == isSecondPlayerTurn()) {
             return false;
         } //If it is currently the other player's turn, this is illegal
@@ -63,7 +62,7 @@ public class GameLogic implements PlayableLogic {
 
         newP.add(b);
 
-        piecePosition[b.getX()][b.getY()].setPositions("("+b.getX()+","+b.getY()+")"); //Add to ArrayList destination position
+        piecePosition[b.getX()][b.getY()].setPositions("("+b.getX()+", "+b.getY()+")"); //Add to ArrayList destination position
 
         piecePosition[a.getX()][a.getY()] = null; //After the piece moved, the last position the piece was in is empty
 
@@ -71,8 +70,33 @@ public class GameLogic implements PlayableLogic {
             isPossibleToKill(b); //If the one moving is not the king, check for possible kills
         }
         m_isFirstPlayerTurn = !m_isFirstPlayerTurn; //change the turn to the other player
-
+        checkWinningTerms();
         return true;
+    }
+
+    private void checkWinningTerms(){
+        if ((kingPosition.getX()==0 && kingPosition.getY()==0) || (kingPosition.getX()==10 && kingPosition.getY()==0) ||
+                (kingPosition.getX()==0 && kingPosition.getY()==10) ||(kingPosition.getX()==10 && kingPosition.getY()==10)) {
+            //add win to defender win counter if its true
+            defender.addWin();
+            //return the king to original position for next game
+            kingPosition.set(FIRST_KING_POSITION);
+            //print stats of the game
+            printStatistics(printPiece, defender);
+            //return true if the game is finished
+            Winner = true;
+        }
+        if(isKingKilled()){
+            //if the king is killed, add win to the attacker counter
+            attacker.addWin();
+            //return the king to original position for next game
+            kingPosition.set(FIRST_KING_POSITION);
+            //print stats of the game
+            printStatistics (printPiece, attacker);
+            //return true if the game is finished
+            Winner=true;
+        }
+
     }
 
     /**
@@ -115,30 +139,7 @@ public class GameLogic implements PlayableLogic {
     @Override
     //This is a function that check if the game is finished, by the king being killed or the king get one of the corners
     public boolean isGameFinished() {
-        //This is a check if the king get one of the corners
-        if ((kingPosition.getX()==0 && kingPosition.getY()==0) || (kingPosition.getX()==10 && kingPosition.getY()==0) ||
-                (kingPosition.getX()==0 && kingPosition.getY()==10) ||(kingPosition.getX()==10 && kingPosition.getY()==10)) {
-            //add win to defender win counter if its true
-            defender.addWin();
-            //return the king to original position for next game
-          kingPosition.set(FIRST_KING_POSITION);
-          //print stats of the game
-            printStatistics (printPiece, defender);
-            //return true if the game is finished
-            return true;
-        }
-        //Check if the king is killed
-        if(isKingKilled()){
-            //if the king is killed, add win to the attacker counter
-            attacker.addWin();
-            //return the king to original position for next game
-            kingPosition.set(FIRST_KING_POSITION);
-            //print stats of the game
-            printStatistics (printPiece, attacker);
-            //return true if the game is finished
-            return true;
-        }
-        return false;
+        return Winner;
     }
 
     /**
@@ -182,11 +183,11 @@ public class GameLogic implements PlayableLogic {
                 }
                 if (!lastP.isEmpty()  && !newP.isEmpty() && !newP.peek().equals(lastP.peek())){
                     //back to the last position
-                    piecePosition[newP.peek().getX()][newP.peek().getY()].removelLoc("("+newP.peek().getX()+","+newP.peek().getY()+")");
+                    piecePosition[newP.peek().getX()][newP.peek().getY()].removelLoc("("+newP.peek().getX()+", "+newP.peek().getY()+")");
                     piecePosition[newP.peek().getX()][newP.peek().getY()].removeLastLoc();
                     boolean flag=false;
                     for (int i=0; i<piecePosition[newP.peek().getX()][newP.peek().getY()].getPositions().size(); i++){
-                        if (piecePosition[newP.peek().getX()][newP.peek().getY()].getPositions().get(i) == "("+newP.peek().getX()+","+newP.peek().getY()+")"){
+                        if (piecePosition[newP.peek().getX()][newP.peek().getY()].getPositions().get(i) == "("+newP.peek().getX()+", "+newP.peek().getY()+")"){
                             flag=true;
                         }
                     }
@@ -221,6 +222,7 @@ public class GameLogic implements PlayableLogic {
         killedPiece = new Stack<>();
         lastP = new Stack<>();
         newP = new Stack<>();
+        Winner=false;
         //this is clear the counter of steps on each square
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
@@ -236,222 +238,222 @@ public class GameLogic implements PlayableLogic {
         //In this few blocks, we define the start position of each piece on the board
         arr[5][5] = new King(defender,"K7");
         printPiece.add(arr[5][5]);
-        arr[5][5].setPositions("(5,5)");
+        arr[5][5].setPositions("(5, 5)");
         howManySteps[5][5]=1;
 
         arr[5][3] = new Pawn(defender,"D1");
         printPiece.add(arr[5][3]);
-        arr[5][3].setPositions("(5,3)");
+        arr[5][3].setPositions("(5, 3)");
         howManySteps[5][3]=1;
         ((Pawn)arr[5][3]).restart_Kill();
 
         arr[5][4] = new Pawn(defender,"D3");
         printPiece.add(arr[5][4]);
-        arr[5][4].setPositions("(5,4)");
+        arr[5][4].setPositions("(5, 4)");
         howManySteps[5][4]=1;
         ((Pawn) arr[5][4]).restart_Kill();
 
         arr[5][6] = new Pawn(defender, "D11");
         printPiece.add(arr[5][6]);
-        arr[5][6].setPositions("(5,6)");
+        arr[5][6].setPositions("(5, 6)");
         howManySteps[5][6]=1;
         ((Pawn)arr[5][6]).restart_Kill();
 
         arr[5][7] = new Pawn(defender,"D13");
         printPiece.add(arr[5][7]);
-        arr[5][7].setPositions("(5,7)");
+        arr[5][7].setPositions("(5, 7)");
         howManySteps[5][7]=1;
         ((Pawn)arr[5][7]).restart_Kill();
 
         arr[3][5] = new Pawn(defender,"D5" );
         printPiece.add(arr[3][5]);
-        arr[3][5].setPositions("(3,5)");
+        arr[3][5].setPositions("(3, 5)");
         howManySteps[3][5]=1;
         ((Pawn)arr[3][5]).restart_Kill();
 
         arr[4][5] = new Pawn(defender,"D6" );
         printPiece.add(arr[4][5]);
-        arr[4][5].setPositions("(4,5)");
+        arr[4][5].setPositions("(4, 5)");
         howManySteps[4][5]=1;
         ((Pawn)arr[4][5]).restart_Kill();
 
         arr[6][5] = new Pawn(defender,"D8" );
         printPiece.add(arr[6][5]);
-        arr[6][5].setPositions("(6,5)");
+        arr[6][5].setPositions("(6, 5)");
         howManySteps[6][5]=1;
         ((Pawn)arr[6][5]).restart_Kill();
 
         arr[7][5] = new Pawn(defender,"D9" );
         printPiece.add(arr[7][5]);
-        arr[7][5].setPositions("(7,5)");
+        arr[7][5].setPositions("(7, 5)");
         howManySteps[7][5]=1;
         ((Pawn)arr[7][5]).restart_Kill();
 
         arr[4][4] = new Pawn(defender,"D2" );
         printPiece.add(arr[4][4]);
-        arr[4][4].setPositions("(4,4)");
+        arr[4][4].setPositions("(4, 4)");
         howManySteps[4][4]=1;
         ((Pawn)arr[4][4]).restart_Kill();
 
         arr[6][4] = new Pawn(defender,"D4" );
         printPiece.add(arr[6][4]);
-        arr[6][4].setPositions("(6,4)");
+        arr[6][4].setPositions("(6, 4)");
         howManySteps[6][4]=1;
         ((Pawn)arr[6][4]).restart_Kill();
 
         arr[6][6] = new Pawn(defender,"D12" );
         printPiece.add(arr[6][6]);
-        arr[6][6].setPositions("(6,6)");
+        arr[6][6].setPositions("(6, 6)");
         howManySteps[6][6]=1;
         ((Pawn)arr[6][6]).restart_Kill();
 
         arr[4][6] = new Pawn(defender,"D10" );
         printPiece.add(arr[4][6]);
-        arr[4][6].setPositions("(4,6)");
+        arr[4][6].setPositions("(4, 6)");
         howManySteps[4][6]=1;
         ((Pawn)arr[4][6]).restart_Kill();
 
         arr[0][3] = new Pawn(attacker,"A7");
         printPiece.add(arr[0][3]);
-        arr[0][3].setPositions("(0,3)");
+        arr[0][3].setPositions("(0, 3)");
         howManySteps[0][3]=1;
         ((Pawn)arr[0][3]).restart_Kill();
 
         arr[0][4] = new Pawn(attacker,"A9" );
         printPiece.add(arr[0][4]);
-        arr[0][4].setPositions("(0,4)");
+        arr[0][4].setPositions("(0, 4)");
         howManySteps[0][4]=1;
         ((Pawn)arr[0][4]).restart_Kill();
 
         arr[0][5] = new Pawn(attacker,"A11" );
         printPiece.add(arr[0][5]);
-        arr[0][5].setPositions("(0,5)");
+        arr[0][5].setPositions("(0, 5)");
         howManySteps[0][5]=1;
         ((Pawn)arr[0][5]).restart_Kill();
 
         arr[0][6] = new Pawn(attacker,"A15" );
         printPiece.add(arr[0][6]);
-        arr[0][6].setPositions("(0,6)");
+        arr[0][6].setPositions("(0, 6)");
         howManySteps[0][6]=1;
         ((Pawn)arr[0][6]).restart_Kill();
 
         arr[0][7] = new Pawn(attacker,"A17" );
         printPiece.add(arr[0][7]);
-        arr[0][7].setPositions("(0,7)");
+        arr[0][7].setPositions("(0, 7)");
         howManySteps[0][7]=1;
         ((Pawn)arr[0][7]).restart_Kill();
 
         arr[1][5] = new Pawn(attacker,"A12" );
         printPiece.add(arr[1][5]);
-        arr[1][5].setPositions("(1,5)");
+        arr[1][5].setPositions("(1, 5)");
         howManySteps[1][5]=1;
         ((Pawn)arr[1][5]).restart_Kill();
 
         arr[10][3] = new Pawn(attacker,"A8" );
         printPiece.add(arr[10][3]);
-        arr[10][3].setPositions("(10,3)");
+        arr[10][3].setPositions("(10, 3)");
         howManySteps[10][3]=1;
         ((Pawn)arr[10][3]).restart_Kill();
 
         arr[10][4] = new Pawn(attacker,"A10" );
         printPiece.add(arr[10][4]);
-        arr[10][4].setPositions("(10,4)");
+        arr[10][4].setPositions("(10, 4)");
         howManySteps[10][4]=1;
         ((Pawn)arr[10][4]).restart_Kill();
 
         arr[10][5] = new Pawn(attacker,"A14" );
         printPiece.add(arr[10][5]);
-        arr[10][5].setPositions("(10,5)");
+        arr[10][5].setPositions("(10, 5)");
         howManySteps[10][5]=1;
         ((Pawn)arr[10][5]).restart_Kill();
 
         arr[10][6] = new Pawn(attacker,"A16");
         printPiece.add(arr[10][6]);
-        arr[10][6].setPositions("(10,6)");
+        arr[10][6].setPositions("(10, 6)");
         howManySteps[10][6]=1;
         ((Pawn)arr[10][6]).restart_Kill();
 
         arr[10][7] = new Pawn(attacker,"A18" );
         printPiece.add(arr[10][7]);
-        arr[10][7].setPositions("(10,7)");
+        arr[10][7].setPositions("(10, 7)");
         howManySteps[10][7]=1;
         ((Pawn)arr[10][7]).restart_Kill();
 
         arr[9][5] = new Pawn(attacker,"A13" );
         printPiece.add(arr[9][5]);
-        arr[9][5].setPositions("(9,5)");
+        arr[9][5].setPositions("(9, 5)");
         howManySteps[9][5]=1;
         ((Pawn) arr[9][5]).restart_Kill();
 
         arr[3][0] = new Pawn(attacker,"A1" );
         printPiece.add(arr[3][0]);
-        arr[3][0].setPositions("(3,0)");
+        arr[3][0].setPositions("(3, 0)");
         howManySteps[3][0]=1;
         ((Pawn) arr[3][0]).restart_Kill();
 
         arr[4][0] = new Pawn(attacker,"A2" );
         printPiece.add(arr[4][0]);
-        arr[4][0].setPositions("(4,0)");
+        arr[4][0].setPositions("(4, 0)");
         howManySteps[4][0]=1;
         ((Pawn)arr[4][0]).restart_Kill();
 
         arr[5][0] = new Pawn(attacker,"A3" );
         printPiece.add(arr[5][0]);
-        arr[5][0].setPositions("(5,0)");
+        arr[5][0].setPositions("(5, 0)");
         howManySteps[5][0]=1;
         ((Pawn)arr[5][0]).restart_Kill();
 
         arr[6][0] = new Pawn(attacker,"A4" );
         printPiece.add(arr[6][0]);
-        arr[6][0].setPositions("(6,0)");
+        arr[6][0].setPositions("(6, 0)");
         howManySteps[6][0]=1;
         ((Pawn)arr[6][0]).restart_Kill();
 
         arr[7][0] = new Pawn(attacker,"A5" );
         printPiece.add(arr[7][0]);
-        arr[7][0].setPositions("(7,0)");
+        arr[7][0].setPositions("(7, 0)");
         howManySteps[7][0]=1;
         ((Pawn)arr[7][0]).restart_Kill();
 
         arr[5][1] = new Pawn(attacker,"A6" );
         printPiece.add(arr[5][1]);
-        arr[5][1].setPositions("(5,1)");
+        arr[5][1].setPositions("(5, 1)");
         howManySteps[5][1]=1;
         ((Pawn)arr[5][1]).restart_Kill();
 
         arr[3][10] = new Pawn(attacker,"A20" );
         printPiece.add(arr[3][10]);
-        arr[3][10].setPositions("(3,10)");
+        arr[3][10].setPositions("(3, 10)");
         howManySteps[3][10]=1;
         ((Pawn)arr[3][10]).restart_Kill();
 
         arr[4][10] = new Pawn(attacker,"A21" );
         printPiece.add(arr[4][10]);
-        arr[4][10].setPositions("(4,10)");
+        arr[4][10].setPositions("(4, 10)");
         howManySteps[4][10]=1;
         ((Pawn)arr[4][10]).restart_Kill();
 
         arr[5][10] = new Pawn(attacker,"A22" );
         printPiece.add(arr[5][10]);
-        arr[5][10].setPositions("(5,10)");
+        arr[5][10].setPositions("(5, 10)");
         howManySteps[5][10]=1;
         ((Pawn)arr[5][10]).restart_Kill();
 
         arr[6][10] = new Pawn(attacker,"A23" );
         printPiece.add(arr[6][10]);
-        arr[6][10].setPositions("(6,10)");
+        arr[6][10].setPositions("(6, 10)");
         howManySteps[6][10]=1;
         ((Pawn)arr[6][10]).restart_Kill();
 
         arr[7][10] = new Pawn(attacker,"A24" );
         printPiece.add(arr[7][10]);
-        arr[7][10].setPositions("(7,10)");
+        arr[7][10].setPositions("(7, 10)");
         howManySteps[7][10]=1;
         ((Pawn)arr[7][10]).restart_Kill();
 
         arr[5][9] = new Pawn(attacker,"A19" );
         printPiece.add(arr[5][9]);
-        arr[5][9].setPositions("(5,9)");
+        arr[5][9].setPositions("(5, 9)");
         howManySteps[5][9]=1;
         ((Pawn)arr[5][9]).restart_Kill();
 
@@ -763,7 +765,7 @@ public class GameLogic implements PlayableLogic {
     public boolean WasThePieceHere (Position dest) {
         boolean result = true;
         for (int i = 0; i < piecePosition[dest.getX()][dest.getY()].getPositions().size(); i++) {
-            if (piecePosition[dest.getX()][dest.getY()].getPositions().get(i) == "("+dest.getX()+","+dest.getY()+")") {
+            if (piecePosition[dest.getX()][dest.getY()].getPositions().get(i) == "("+dest.getX()+", "+dest.getY()+")") {
                 result = false;
             }
         }
